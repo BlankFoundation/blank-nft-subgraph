@@ -1,3 +1,23 @@
+type Token @entity {
+  id: ID!
+  tokenId: BigInt! # uint256
+  owner: Account! # address
+  tokenURI: String! # string
+}
+
+enum MemberStatus {
+  Active,
+  Revoked,
+  ApprovedOperator
+}
+
+type Account @entity {
+  id: ID!
+  address: Bytes! # address
+  status: MemberStatus
+  blanks: [Token!]! @derivedFrom(field: "owner")
+}
+
 type Approval @entity {
   id: ID!
   owner: Bytes! # address
@@ -17,25 +37,8 @@ type FoundationAddressUpdated @entity {
   foundationAddress: Bytes! # address
 }
 
-type MemberAdded @entity {
-  id: ID!
-  member: Bytes! # address
-}
-
-type MemberRevoked @entity {
-  id: ID!
-  member: Bytes! # address
-}
-
 type OwnershipTransferred @entity {
   id: ID!
   previousOwner: Bytes! # address
   newOwner: Bytes! # address
-}
-
-type Transfer @entity {
-  id: ID!
-  from: Bytes! # address
-  to: Bytes! # address
-  tokenId: BigInt! # uint256
 }
