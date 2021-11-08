@@ -1,20 +1,17 @@
 import {
   Approval as ApprovalEvent,
-  ApprovalForAll as ApprovalForAllEvent,
+  ApprovalForAll as ApprovalForAllEvent, BaseTokenUriUpdated,
   FoundationAddressUpdated as FoundationAddressUpdatedEvent,
   MemberAdded as MemberAddedEvent,
   MemberRevoked as MemberRevokedEvent,
   Minted as MintedEvent,
-  OwnershipTransferred as OwnershipTransferredEvent,
-  TokenUriUpdated as TokenUriUpdatedEvent,
   Transfer as TransferEvent
 } from "../generated/BlankArt/BlankArt"
 import {
   Account,
   Approval,
   ApprovalForAll,
-  FoundationAddressUpdated,
-  OwnershipTransferred,
+  BaseToken,
   Token
 } from "../generated/schema"
 
@@ -57,6 +54,7 @@ export function handleMinted(event: MintedEvent): void {
   }
   member.address = event.params.member
   member.status = "Active"
+  member.blankCount = member.blankCount + 1
   member.save()
 }
 
@@ -68,19 +66,31 @@ export function handleTransfer(event: TransferEvent): void {
   token.owner = newOwner
   token.save()
 
+  let oldMember = Account.load(oldOwner)
+  let oldMemberBlankCount = oldMember.blankCount - 1
+  if(oldMemberBlankCount == 0) {
+    oldMember.status = 'Revoked'
+  }
+  oldMember.blankCount = oldMemberBlankCount
+  oldMember.save()
+
   let member = Account.load(newOwner)
   if(member == null) {
     member = new Account(newOwner)
   }
   member.address = event.params.to
   member.status = "Active"
+  member.blankCount = member.blankCount + 1
   member.save()
 }
 
-export function handleTokenUriUpdated(event: TokenUriUpdatedEvent): void {
-  let token = Token.load(event.params.tokenId.toString())
-  token.tokenURI = event.params.tokenURI
-  token.save()
+export function handleBaseTokenURIUpdated(event: BaseTokenUriUpdated): void {
+  let baseToken = BaseToken.load('1')
+  if(baseToken == null) {
+    baseToken = new BaseToken('1')
+  }
+  baseToken.baseTokenUri = event.params.baseTokenURI
+  baseToken.save()
 }
 
 export function handleApproval(event: ApprovalEvent): void {
@@ -106,20 +116,11 @@ export function handleApprovalForAll(event: ApprovalForAllEvent): void {
 export function handleFoundationAddressUpdated(
   event: FoundationAddressUpdatedEvent
 ): void {
-  let entity = new FoundationAddressUpdated(
-    event.transaction.hash.toHex() + "-" + event.logIndex.toString()
-  )
-  entity.foundationAddress = event.params.foundationAddress
-  entity.save()
-}
+  let baseToken = BaseToken.load('1')
+  if(baseToken == null) {
+    baseToken = new BaseToken('1')
+  }
 
-export function handleOwnershipTransferred(
-  event: OwnershipTransferredEvent
-): void {
-  let entity = new OwnershipTransferred(
-    event.transaction.hash.toHex() + "-" + event.logIndex.toString()
-  )
-  entity.previousOwner = event.params.previousOwner
-  entity.newOwner = event.params.newOwner
-  entity.save()
+  baseToken.controller = event.params.foundationAddress
+  baseToken.save()
 }
