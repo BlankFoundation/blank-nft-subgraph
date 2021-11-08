@@ -5,17 +5,24 @@ type Token @entity {
   tokenURI: String! # string
 }
 
+type Account @entity {
+  id: ID!
+  address: Bytes! # address
+  status: MemberStatus
+  blanks: [Token!]! @derivedFrom(field: "owner")
+  blankCount: Int!
+}
+
 enum MemberStatus {
   Active,
   Revoked,
   ApprovedOperator
 }
 
-type Account @entity {
+type BaseToken @entity {
   id: ID!
-  address: Bytes! # address
-  status: MemberStatus
-  blanks: [Token!]! @derivedFrom(field: "owner")
+  baseTokenUri: String!
+  controller: Bytes!
 }
 
 type Approval @entity {
@@ -30,15 +37,4 @@ type ApprovalForAll @entity {
   owner: Bytes! # address
   operator: Bytes! # address
   approved: Boolean! # bool
-}
-
-type FoundationAddressUpdated @entity {
-  id: ID!
-  foundationAddress: Bytes! # address
-}
-
-type OwnershipTransferred @entity {
-  id: ID!
-  previousOwner: Bytes! # address
-  newOwner: Bytes! # address
 }
