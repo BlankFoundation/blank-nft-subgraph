@@ -1,0 +1,7 @@
+# Build and dependency directories
+node_modules
+build
+generated
+
+# IDE files
+.idea
